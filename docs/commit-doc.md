@@ -1,5 +1,4 @@
-feat(tests): add initial News component tests
+feat(tests): add click handler test for News component
 
-- Created a test file for the News component.
-- Added a mock function to simulate fetching news.
-- Implemented a test to verify that the mock function is called when the News component mounts.
+- Added a test to verify that `mockOnNewsClick` is called when a news item is clicked.
+- Included comments for rendering and simulating the click event.
