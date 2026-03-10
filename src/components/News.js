@@ -2,44 +2,57 @@
 import NewsItem from './NewsItem'
   
   export default class News extends Component {
-    constructor(){
-        super();
-        this.state={
-            articles:[],
-            loading:false
-        }
+    constructor(props){
+      super(props);
+      this.state={
+        articles:[],
+        loading:false,
+        page:1,
+        totalResults:0,
+        lastSearch:''
+      }
      }
 
      async componentDidMount(){
-      let url = "https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=ce3325100b7048659e7c552185c36483&page=1&&pagesize=20";
+      await this.fetchArticles();
+     }
+
+     async componentDidUpdate(prevProps) {
+      if (prevProps.searchQuery !== this.props.searchQuery) {
+        this.setState({ page: 1 }, this.fetchArticles);
+      }
+     }
+
+     fetchArticles = async () => {
+      let { page } = this.state;
+      let { searchQuery } = this.props;
+      let url = '';
+      if (searchQuery && searchQuery.trim() !== '') {
+        url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&apiKey=ce3325100b7048659e7c552185c36483&page=${page}&pageSize=20`;
+      } else {
+        url = `https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=ce3325100b7048659e7c552185c36483&page=${page}&pageSize=20`;
+      }
+      this.setState({ loading: true });
       let data = await fetch(url);
-      let parsedData= await data.json();
-      this.setState({articles : parsedData.articles, page:1, totalResults : parsedData.totalResults})
+      let parsedData = await data.json();
+      this.setState({
+        articles: parsedData.articles || [],
+        totalResults: parsedData.totalResults || 0,
+        loading: false,
+        lastSearch: searchQuery || ''
+      });
      }
 
       handlePreviousClick = async() =>{
-        let url = `https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=ce3325100b7048659e7c552185c36483&page=${this.state.page - 1}&pagesize=20`;
-        let data = await fetch(url);
-        let parsedData= await data.json();
-        this.setState({
-          articles : parsedData.articles,
-          page:this.state.page - 1
-        })
+        await this.setState({ page: this.state.page - 1 }, this.fetchArticles);
      }
 
-     handleNextClick =async () =>{
+     handleNextClick = async () =>{
       if (this.state.page + 1 > Math.ceil(this.state.totalResults / 20)){
-
-      }   
-      else {
-        let url = `https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=ce3325100b7048659e7c552185c36483&page=${this.state.page + 1}&pagesize=20`;
-        let data = await fetch(url);
-        let parsedData= await data.json();
-        this.setState({
-          articles : parsedData.articles,
-          page:this.state.page + 1
-        })
-      } 
+        return;
+      }
+      await this.setState({ page: this.state.page + 1 }, this.fetchArticles);
+     }
       
      }
 
