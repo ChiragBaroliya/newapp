@@ -113,3 +113,137 @@ The application integrates with [NewsAPI.org](https://newsapi.org/).
 Recent updates include:
 - **Click Handlers:** Verified that `NewsItem` click events correctly trigger intended actions.
 - **Rendering:** UI components are validated to render correctly with both empty and populated article arrays.
+This documentation provides an overview of the recent changes made to the React application, focusing on the implementation of a basic authentication system and session persistence.
+
+---
+
+# Application Documentation: Authentication & Search Feature
+
+## Overview
+The application is a React-based news portal that now includes a mock authentication layer. Users must log in to access the news content and search functionality. User sessions are persisted across page reloads using `localStorage`.
+
+## Components
+
+### 1. `App.js` (Main Controller)
+The root component manages the global state for authentication and search queries.
+
+*   **State:**
+    *   `searchQuery` (String): Stores the current search term for news filtering.
+    *   `isAuthenticated` (Boolean): Tracks whether a user is currently logged in.
+    *   `username` (String): Stores the name of the logged-in user.
+*   **Methods:**
+    *   `handleLogin(username)`: Updates the state to authenticated and saves the session to `localStorage`.
+    *   `handleLogout()`: Resets authentication state and clears `localStorage`.
+    *   `handleSearch(query)`: Updates the `searchQuery` state passed to the `News` component.
+*   **Lifecycle:**
+    *   `componentDidMount()`: On initialization, it checks `localStorage` for an existing session to keep the user logged in.
+*   **Conditional Rendering:** 
+    *   If `isAuthenticated` is `false`, it renders the `Login` component.
+    *   If `isAuthenticated` is `true`, it renders the `NavBar` and `News` components.
+
+### 2. `Login.js` (Authentication View)
+A functional component that provides a user interface for logging in.
+
+*   **Logic:**
+    *   Uses `useState` for local form management (username and password).
+    *   Contains a hardcoded credential check:
+        *   **Username:** `user`
+        *   **Password:** `password`
+*   **Props:**
+    *   `onLogin`: A callback function triggered upon successful credential verification.
+
+### 3. `NavBar.js` (Navigation & User Actions)
+Displays the brand, search bar, and user-specific controls.
+
+*   **Features:**
+    *   Contains a search input that triggers the `onSearch` prop.
+    *   **User Profile Section:** If a `username` is provided via props, it displays a "Welcome" message and a "Logout" button.
+*   **Props:**
+    *   `onSearch` (Function): Handles the search form submission.
+    *   `username` (String): The name of the authenticated user.
+    *   `onLogout` (Function): Logic to handle session termination.
+
+---
+
+## Authentication Flow
+
+1.  **Login:** The user enters credentials in the `Login` component. If valid, `App.js` updates its state and writes to `localStorage`.
+2.  **Persistence:** Upon refreshing the browser, `App.js` checks `localStorage`. If `isAuthenticated` is "true", the user bypasses the login screen.
+3.  **Logout:** When the "Logout" button in the `NavBar` is clicked, the state is reset and `localStorage` keys are removed, redirecting the user back to the login screen.
+
+## Data Structure: Local Storage
+The app uses the following keys in the browser's `localStorage`:
+*   `isAuthenticated`: A string (`'true'`) representing the login status.
+*   `username`: The string value of the logged-in user.
+
+---
+
+## Setup & Requirements
+*   **React:** Requires React 16.8+ (due to the use of Hooks in `Login.js`).
+*   **Dependencies:** Standard Bootstrap classes are used for styling in the `NavBar`.
+*   **Prop Types:** Components are documented with `PropTypes` to ensure correct data types are passed for search and authentication handlers.
+<!-- DIFF_HASH:0C08D0C23CEC314989268EBB6F030F2B7026AD6EF29997F719B319C12745BD09 -->
+This documentation provides a technical overview of the authentication and search features recently added to the React News Application.
+
+---
+
+# React News Portal: Authentication & Search Documentation
+
+## 1. Overview
+The application has been upgraded from a static news viewer to a protected portal. It now features a mock authentication system, session persistence using the browser's Local Storage, and a functional search filter for news articles.
+
+## 2. Component Architecture
+
+### `App.js` (The Orchestrator)
+The root component serves as the central state manager for the application.
+*   **Authentication Logic:** Uses `isAuthenticated` (Boolean) and `username` (String) state to determine which view to render.
+*   **Session Persistence:** 
+    *   `componentDidMount()`: On load, it checks `localStorage` for an existing session.
+    *   `handleLogin()`: Saves the session to `localStorage` to prevent logout on page refresh.
+    *   `handleLogout()`: Clears the session from both state and `localStorage`.
+*   **Search Logic:** Manages the `searchQuery` state and passes it down to the `News` component to filter API results.
+
+### `Login.js` (Functional Component)
+A lightweight component using React Hooks (`useState`) to handle the login form.
+*   **Mock Validation:** Validates against hardcoded credentials:
+    *   **Username:** `user`
+    *   **Password:** `password`
+*   **Error Handling:** Displays a local error message state if credentials do not match.
+*   **Props:** Receives `onLogin` to notify the parent `App` component of a successful login.
+
+### `NavBar.js` (Navigation & Search)
+The navigation header provides the interface for user-driven actions.
+*   **Search Input:** Captures user input and triggers the `onSearch` prop.
+*   **User UI:** Conditionally renders a "Welcome [Username]" message and a "Logout" button if a user is authenticated.
+*   **Props Validation:** Uses `PropTypes` to ensure `onSearch`, `username`, and `onLogout` are correctly passed.
+
+---
+
+## 3. Data Flow & Persistence
+
+### Authentication Workflow
+1.  **Submission:** User submits credentials via the `Login` component.
+2.  **Verification:** If credentials match `user`/`password`, `App.js` updates state.
+3.  **Storage:** `localStorage.setItem('isAuthenticated', 'true')` is called.
+4.  **Re-entry:** If the user closes and reopens the browser, `componentDidMount` restores the session from `localStorage`.
+
+### Local Storage Schema
+| Key | Value | Purpose |
+| :--- | :--- | :--- |
+| `isAuthenticated` | `"true"` / `"false"` | Maintains login status across sessions. |
+| `username` | `string` | Stores the name of the logged-in user for display. |
+
+---
+
+## 4. Technical Specifications
+*   **React Version:** Requires **React 16.8+** (due to the use of Hooks in the `Login` component).
+*   **Styling:** Utilizes **Bootstrap 5** classes for the Navbar layout, Search bar, and Buttons.
+*   **Prop Handling:** 
+    *   `News` component filters articles based on the `searchQuery` prop.
+    *   `NavBar` uses `PropTypes` for type-checking function and string props.
+
+---
+
+## 5. Security Note
+> [!WARNING]  
+> The current authentication implementation is a **mock/client-side only** solution for demonstration purposes. It uses hardcoded credentials and local storage, which is not suitable for production environments requiring high security. For production, integrate with a back-end JWT (JSON Web Token) or OAuth service.

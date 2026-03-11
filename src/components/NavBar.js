@@ -19,6 +19,7 @@ export default class NavBar extends Component {
   }
 
   render() {
+    const { username, onLogout } = this.props;
     return (
       <div>
         <nav className="navbar navbar-expand-lg bg-body-tertiary">
@@ -47,14 +48,22 @@ export default class NavBar extends Component {
                 />
                 <button className="btn btn-outline-success" type="submit">Search</button>
               </form>
+              {username && (
+                <div className="ms-3 d-flex align-items-center">
+                  <span>Welcome, {username}</span>
+                  <button className="btn btn-danger ms-2" onClick={onLogout}>Logout</button>
+                </div>
+              )}
             </div>
           </div>
         </nav>
       </div>
     );
-}
+  }
   }
 NavBar.propTypes = {
-  onSearch: PropTypes.func
+  onSearch: PropTypes.func,
+  username: PropTypes.string,
+  onLogout: PropTypes.func
 };
 }
