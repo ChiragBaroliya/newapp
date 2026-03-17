@@ -50,7 +50,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y jq
 
     # ----------------------------------------
-    # Generate AI Documentation (Groq)
+    # Generate AI Documentation (Groq + Highlight)
     # ----------------------------------------
     - name: Generate AI Documentation
       env:
@@ -58,17 +58,15 @@ jobs:
       run: |
         echo "🔍 Getting Git Diff..."
 
-        # ✅ FIX: Proper infinite loop check
+        # Prevent infinite loop
         LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
-
         if [[ "$LAST_COMMIT_MSG" == *"Auto update documentation"* ]]; then
           echo "Skipping AI commit loop"
           exit 0
         fi
 
-        # Check commit count
+        # Get diff
         COMMIT_COUNT=$(git rev-list --count HEAD)
-
         if [ "$COMMIT_COUNT" -lt 2 ]; then
           echo "Only one commit found. Using full repo content..."
           DIFF=$(git ls-files | xargs cat | head -c 12000)
@@ -81,12 +79,23 @@ jobs:
           exit 0
         fi
 
-        # Limit size
         DIFF=$(echo "$DIFF" | head -c 12000)
+
+        echo "🟢 Extracting added lines..."
+
+        # Extract added lines
+        ADDED_LINES=$(echo "$DIFF" | grep '^+' | grep -v '+++' | sed 's/^+//')
+
+        # Format with green color
+        FORMATTED_CHANGES=$(echo "$ADDED_LINES" | sed 's/.*/<span style="color:green">+ &<\/span>/')
+
+        if [ -z "$FORMATTED_CHANGES" ]; then
+          FORMATTED_CHANGES="No new changes detected."
+        fi
 
         echo "🤖 Preparing Groq request..."
 
-        # ✅ FIX: Safe JSON payload
+        # Safe payload
         PAYLOAD=$(jq -n --arg diff "$DIFF" '{
           model: "openai/gpt-oss-20b",
           input: ("You are a senior software documentation engineer.\n\nAnalyze the following git diff and generate structured markdown documentation.\n\nInclude:\n- Summary of changes\n- Components affected\n- Technical explanation\n\nGit Diff:\n" + $diff)
@@ -102,19 +111,24 @@ jobs:
         echo "🔍 Full API Response:"
         echo $RESPONSE
 
-        # ✅ FIX: Robust parsing
+        # Parse response
         DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
 
-        # ✅ Fallback handling
         if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
-          echo "⚠️ Empty AI response. Using fallback."
           DOC="## AI Documentation\n\nNo meaningful documentation generated."
         fi
 
         mkdir -p docs
-        echo "$DOC" > docs/auto-generated.md
 
-        echo "📄 Documentation generated"
+        echo "📄 Writing documentation..."
+
+        {
+          echo "$DOC"
+          echo ""
+          echo "## 🟢 Latest Changes"
+          echo ""
+          echo "$FORMATTED_CHANGES"
+        } > docs/auto-generated.md
 
     # ----------------------------------------
     # Commit & Push Changes
