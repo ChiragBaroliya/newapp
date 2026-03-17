@@ -28,6 +28,37 @@
   color: #61dafb;
 }
 
+.dark-mode {
+  background-color: #181a1b !important;
+  color: #e8e6e3 !important;
+}
+
+.dark-mode .navbar {
+  background-color: #23272b !important;
+}
+
+.dark-mode .navbar-brand,
+.dark-mode .nav-link,
+.dark-mode .navbar-nav .nav-link.active {
+  color: #e8e6e3 !important;
+}
+
+.dark-mode .form-control {
+  background-color: #23272b !important;
+  color: #e8e6e3 !important;
+  border-color: #444 !important;
+}
+
+.dark-mode .btn-dark {
+  background-color: #444 !important;
+  color: #e8e6e3 !important;
+}
+
+.dark-mode .btn-light {
+  background-color: #e8e6e3 !important;
+  color: #23272b !important;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

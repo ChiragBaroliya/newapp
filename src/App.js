@@ -1,3 +1,4 @@
+
 import './App.css';
 
 import React, { Component } from 'react';
@@ -11,8 +12,14 @@ export default class App extends Component {
     this.state = {
       searchQuery: '',
       isAuthenticated: false,
-      username: ''
+      username: '',
+      darkMode: false
     };
+  }
+  handleToggleDarkMode = () => {
+    this.setState((prevState) => ({ darkMode: !prevState.darkMode }));
+    // Optionally, persist dark mode preference
+    localStorage.setItem('darkMode', !this.state.darkMode);
   }
 
   handleSearch = (query) => {
@@ -36,8 +43,12 @@ export default class App extends Component {
     // Restore auth state from localStorage
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     const username = localStorage.getItem('username') || '';
+    const darkMode = localStorage.getItem('darkMode') === 'true';
     if (isAuthenticated) {
       this.setState({ isAuthenticated, username });
+    }
+    if (darkMode) {
+      this.setState({ darkMode });
     }
   }
 
@@ -46,8 +57,14 @@ export default class App extends Component {
       return <Login onLogin={this.handleLogin} />;
     }
     return (
-      <div>
-        <NavBar onSearch={this.handleSearch} username={this.state.username} onLogout={this.handleLogout} />
+      <div className={this.state.darkMode ? 'App dark-mode' : 'App'}>
+        <NavBar
+          onSearch={this.handleSearch}
+          username={this.state.username}
+          onLogout={this.handleLogout}
+          darkMode={this.state.darkMode}
+          onToggleDarkMode={this.handleToggleDarkMode}
+        />
         <News searchQuery={this.state.searchQuery} />
       </div>
     );
