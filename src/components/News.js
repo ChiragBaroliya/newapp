@@ -10,13 +10,20 @@
         loading:false,
         page:1,
         totalResults:0,
-        lastSearch:''
+        lastSearch:'',
+        lastArticleTime:null,
+        newArticlesCount:0,
+        showNewAlert:false
       }
      }
 
-     async componentDidMount(){
-      await this.fetchArticles();
-     }
+    async componentDidMount(){
+     await this.fetchArticles();
+     this.pollInterval = setInterval(this.checkForNewArticles, 60000); // every 60s
+    }
+  componentWillUnmount() {
+   clearInterval(this.pollInterval);
+  }
 
      async componentDidUpdate(prevProps) {
       if (prevProps.searchQuery !== this.props.searchQuery) {
@@ -36,12 +43,39 @@
       this.setState({ loading: true });
       let data = await fetch(url);
       let parsedData = await data.json();
+      let articles = parsedData.articles || [];
+      let lastArticleTime = articles.length > 0 ? articles[0].publishedAt : null;
       this.setState({
-        articles: parsedData.articles || [],
+        articles,
         totalResults: parsedData.totalResults || 0,
         loading: false,
-        lastSearch: searchQuery || ''
+        lastSearch: searchQuery || '',
+        lastArticleTime,
+        newArticlesCount: 0,
+        showNewAlert: false
       });
+     }
+     checkForNewArticles = async () => {
+      let { searchQuery, category } = this.props;
+      let url = '';
+      if (searchQuery && searchQuery.trim() !== '') {
+        url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&apiKey=ce3325100b7048659e7c552185c36483&page=1&pageSize=20`;
+      } else {
+        url = `https://newsapi.org/v2/top-headlines?country=us&category=${category || 'business'}&apiKey=ce3325100b7048659e7c552185c36483&page=1&pageSize=20`;
+      }
+      let data = await fetch(url);
+      let parsedData = await data.json();
+      let articles = parsedData.articles || [];
+      let latestTime = articles.length > 0 ? articles[0].publishedAt : null;
+      if (latestTime && latestTime !== this.state.lastArticleTime) {
+        // Count new articles
+        let count = 0;
+        for (let article of articles) {
+          if (article.publishedAt === this.state.lastArticleTime) break;
+          count++;
+        }
+        this.setState({ newArticlesCount: count, showNewAlert: true });
+      }
      }
 
       handlePreviousClick = async() =>{
@@ -74,6 +108,11 @@
           {loading && <Spinner />}
           {!loading && articles.length === 0 && (
             <div className="alert alert-info mt-4">No results found.</div>
+          )}
+          {this.state.showNewAlert && this.state.newArticlesCount > 0 && (
+            <div className="alert alert-success mt-2" role="alert">
+              {this.state.newArticlesCount} new article(s) available. <button className="btn btn-sm btn-primary ms-2" onClick={this.fetchArticles}>Refresh</button>
+            </div>
           )}
           <div className='row'>
             {!loading && articles.map((element) => {
