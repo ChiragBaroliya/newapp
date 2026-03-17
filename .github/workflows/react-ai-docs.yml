@@ -9,7 +9,7 @@ jobs:
 
     steps:
     # ----------------------------------------
-    # Checkout Code (FULL HISTORY)
+    # Checkout Code
     # ----------------------------------------
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -50,63 +50,84 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y jq
 
     # ----------------------------------------
-    # Generate AI Documentation (Commit History Based)
+    # Generate Incremental AI Documentation
     # ----------------------------------------
-    - name: Generate AI Documentation
+    - name: Generate AI Documentation (Last Commit Only)
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       run: |
-        echo "📜 Getting commit history..."
+        echo "📜 Getting last commit details..."
+
+        LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+        LAST_COMMIT_HASH=$(git log -1 --pretty=%h)
+        LAST_COMMIT_AUTHOR=$(git log -1 --pretty=%an)
+        LAST_COMMIT_DATE=$(git log -1 --pretty=%ad)
 
         # Prevent infinite loop
-        LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
         if [[ "$LAST_COMMIT_MSG" == *"Auto update documentation"* ]]; then
           echo "Skipping AI commit loop"
           exit 0
         fi
 
-        # Get last 20 commits
-        COMMITS=$(git log -20 --pretty=format:"Commit: %h%nAuthor: %an%nMessage: %s%nDate: %ad%n---")
+        # Get diff of last commit
+        DIFF=$(git show HEAD --stat)
 
-        if [ -z "$COMMITS" ]; then
-          echo "No commit history found"
-          exit 0
-        fi
-
-        # Limit size (token safety)
-        COMMITS=$(echo "$COMMITS" | head -c 12000)
+        DIFF=$(echo "$DIFF" | head -c 8000)
 
         echo "🤖 Preparing Groq request..."
 
-        # Safe JSON payload
-        PAYLOAD=$(jq -n --arg commits "$COMMITS" '{
-          model: "openai/gpt-oss-20b",
-          input: ("You are a senior software documentation engineer.\n\nAnalyze the following commit history and generate structured project documentation.\n\nInclude:\n- Project overview\n- Features implemented\n- Components/modules affected\n- Key improvements\n- Technical summary\n\nCommit History:\n" + $commits)
-        }')
+        PAYLOAD=$(jq -n \
+          --arg msg "$LAST_COMMIT_MSG" \
+          --arg diff "$DIFF" \
+          '{
+            model: "openai/gpt-oss-20b",
+            input: (
+"You are a senior software engineer.
 
-        echo "🚀 Calling Groq API..."
+Based on the following commit, generate a short incremental documentation update.
+
+Include:
+- What changed
+- Impacted components
+- Technical summary
+
+Commit Message:
+" + $msg + "
+
+Commit Details:
+" + $diff
+            )
+          }')
 
         RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
           -H "Authorization: Bearer $GROQ_API_KEY" \
           -H "Content-Type: application/json" \
           -d "$PAYLOAD")
 
-        echo "🔍 Full API Response:"
-        echo $RESPONSE
-
-        # Parse response
         DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
 
-        # Fallback
         if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
-          DOC="## AI Documentation\n\nNo meaningful documentation generated."
+          DOC="No meaningful documentation generated."
         fi
 
         mkdir -p docs
 
-        echo "📄 Writing documentation..."
+        CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
-        echo "$DOC" > docs/auto-generated.md
+        echo "📄 Updating documentation..."
+
+        {
+          echo ""
+          echo "## 📅 Update - $CURRENT_TIME"
+          echo ""
+          echo "**Commit:** $LAST_COMMIT_HASH"
+          echo "**Author:** $LAST_COMMIT_AUTHOR"
+          echo "**Message:** $LAST_COMMIT_MSG"
+          echo ""
+          echo "$DOC"
+          echo ""
+          echo "---"
+        } >> docs/auto-generated.md
 
     # ----------------------------------------
     # Commit & Push Changes
