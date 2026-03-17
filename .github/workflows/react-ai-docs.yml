@@ -14,7 +14,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0   # ✅ IMPORTANT FIX
+        fetch-depth: 0
+        persist-credentials: true   # ✅ FIX for push
 
     # ----------------------------------------
     # Setup Node.js
@@ -88,10 +89,28 @@ jobs:
           -H "Content-Type: application/json" \
           -d "{
             \"model\": \"openai/gpt-oss-20b\",
-            \"input\": \"You are an AI documentation assistant. Update documentation based on this git diff:\\n$DIFF\"
+            \"input\": \"You are a senior software documentation engineer.
+
+Analyze the following git diff and generate structured markdown documentation.
+
+Include:
+- Summary of changes
+- Components affected
+- Technical explanation
+
+Git Diff:
+$DIFF\"
           }")
 
-        DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text')
+        echo "🔍 Full API Response:"
+        echo $RESPONSE
+
+        DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
+
+        if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
+          echo "⚠️ Empty AI response. Using fallback."
+          DOC="## AI Documentation\n\nNo meaningful documentation generated."
+        fi
 
         mkdir -p docs
         echo "$DOC" > docs/auto-generated.md
@@ -114,4 +133,7 @@ jobs:
         fi
 
         git commit -m "Auto update documentation via AI"
+
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
         git push
