@@ -61,7 +61,6 @@ jobs:
         LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
         LAST_COMMIT_HASH=$(git log -1 --pretty=%h)
         LAST_COMMIT_AUTHOR=$(git log -1 --pretty=%an)
-        LAST_COMMIT_DATE=$(git log -1 --pretty=%ad)
 
         # Prevent infinite loop
         if [[ "$LAST_COMMIT_MSG" == *"Auto update documentation"* ]]; then
@@ -69,35 +68,41 @@ jobs:
           exit 0
         fi
 
-        # Get diff of last commit
-        DIFF=$(git show HEAD --stat)
-
+        # Get full commit diff + files
+        DIFF=$(git show --name-only HEAD)
         DIFF=$(echo "$DIFF" | head -c 8000)
+
+        echo "🤖 Preparing prompt..."
+
+        PROMPT=$(cat <<EOF
+You are a senior software engineer.
+
+Generate a clear incremental documentation update based on this commit.
+
+Include:
+- Summary of changes
+- Affected components/files
+- Technical explanation
+- Impact on system
+
+Commit Message:
+$LAST_COMMIT_MSG
+
+Commit Details:
+$DIFF
+EOF
+)
 
         echo "🤖 Preparing Groq request..."
 
         PAYLOAD=$(jq -n \
-          --arg msg "$LAST_COMMIT_MSG" \
-          --arg diff "$DIFF" \
+          --arg prompt "$PROMPT" \
           '{
             model: "openai/gpt-oss-20b",
-            input: (
-"You are a senior software engineer.
-
-Based on the following commit, generate a short incremental documentation update.
-
-Include:
-- What changed
-- Impacted components
-- Technical summary
-
-Commit Message:
-" + $msg + "
-
-Commit Details:
-" + $diff
-            )
+            input: $prompt
           }')
+
+        echo "🚀 Calling Groq API..."
 
         RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
           -H "Authorization: Bearer $GROQ_API_KEY" \
@@ -111,6 +116,7 @@ Commit Details:
         fi
 
         mkdir -p docs
+        touch docs/auto-generated.md
 
         CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
