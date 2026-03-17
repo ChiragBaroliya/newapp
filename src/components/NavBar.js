@@ -28,6 +28,10 @@ export default class NavBar extends Component {
 
   render() {
     const { username, onLogout, darkMode, onToggleDarkMode } = this.props;
+    const { category, onCategoryChange } = this.props;
+    const categories = [
+      'business', 'entertainment', 'general', 'health', 'science', 'sports', 'technology'
+    ];
     return (
       <div>
         <nav className={"navbar navbar-expand-lg " + (darkMode ? "navbar-dark bg-dark" : "bg-body-tertiary") }>
@@ -43,6 +47,18 @@ export default class NavBar extends Component {
                 </li>
                 <li className="nav-item">
                   <a className="nav-link" href="/about">About</a>
+                </li>
+                <li className="nav-item">
+                  <select
+                    className="form-select ms-2"
+                    value={category}
+                    onChange={e => onCategoryChange && onCategoryChange(e.target.value)}
+                    style={{ width: 150 }}
+                  >
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                    ))}
+                  </select>
                 </li>
               </ul>
               <form className="d-flex" role="search" onSubmit={this.handleSearch}>

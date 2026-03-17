@@ -14,8 +14,12 @@ export default class App extends Component {
       isAuthenticated: false,
       username: '',
       darkMode: false,
-      favorites: JSON.parse(localStorage.getItem('favorites') || '[]')
+      favorites: JSON.parse(localStorage.getItem('favorites') || '[]'),
+      category: 'business'
     };
+      handleCategoryChange = (category) => {
+        this.setState({ category });
+      }
     handleToggleFavorite = (article) => {
       this.setState((prevState) => {
         const exists = prevState.favorites.some(fav => fav.url === article.url);
@@ -78,11 +82,14 @@ export default class App extends Component {
           onLogout={this.handleLogout}
           darkMode={this.state.darkMode}
           onToggleDarkMode={this.handleToggleDarkMode}
+          category={this.state.category}
+          onCategoryChange={this.handleCategoryChange}
         />
         <News
           searchQuery={this.state.searchQuery}
           favorites={this.state.favorites}
           onToggleFavorite={this.handleToggleFavorite}
+          category={this.state.category}
         />
       </div>
     );

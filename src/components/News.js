@@ -26,12 +26,12 @@
 
      fetchArticles = async () => {
       let { page } = this.state;
-      let { searchQuery } = this.props;
+      let { searchQuery, category } = this.props;
       let url = '';
       if (searchQuery && searchQuery.trim() !== '') {
         url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&apiKey=ce3325100b7048659e7c552185c36483&page=${page}&pageSize=20`;
       } else {
-        url = `https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=ce3325100b7048659e7c552185c36483&page=${page}&pageSize=20`;
+        url = `https://newsapi.org/v2/top-headlines?country=us&category=${category || 'business'}&apiKey=ce3325100b7048659e7c552185c36483&page=${page}&pageSize=20`;
       }
       this.setState({ loading: true });
       let data = await fetch(url);
