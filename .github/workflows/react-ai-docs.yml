@@ -1,7 +1,7 @@
 name: React AI Documentation (Manual)
 
 on:
-  workflow_dispatch:   # ✅ Manual trigger only
+  workflow_dispatch:
 
 jobs:
   build-and-docs:
@@ -9,13 +9,13 @@ jobs:
 
     steps:
     # ----------------------------------------
-    # Checkout Code (FULL HISTORY FIX)
+    # Checkout Code (FULL HISTORY)
     # ----------------------------------------
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        persist-credentials: true   # ✅ FIX for push
+        persist-credentials: true
 
     # ----------------------------------------
     # Setup Node.js
@@ -32,7 +32,7 @@ jobs:
       run: npm install
 
     # ----------------------------------------
-    # Disable CI strict mode (avoid ESLint fail)
+    # Disable CI strict mode
     # ----------------------------------------
     - name: Disable CI warnings as errors
       run: echo "CI=false" >> $GITHUB_ENV
@@ -58,8 +58,10 @@ jobs:
       run: |
         echo "🔍 Getting Git Diff..."
 
-        # Prevent infinite loop
-        if [[ "${{ github.event.head_commit.message }}" == *"Auto update documentation"* ]]; then
+        # ✅ FIX: Proper infinite loop check
+        LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
+
+        if [[ "$LAST_COMMIT_MSG" == *"Auto update documentation"* ]]; then
           echo "Skipping AI commit loop"
           exit 0
         fi
@@ -71,7 +73,7 @@ jobs:
           echo "Only one commit found. Using full repo content..."
           DIFF=$(git ls-files | xargs cat | head -c 12000)
         else
-          DIFF=$(git diff HEAD~1 HEAD)
+          DIFF=$(git diff HEAD~1..HEAD)
         fi
 
         if [ -z "$DIFF" ]; then
@@ -79,34 +81,31 @@ jobs:
           exit 0
         fi
 
-        # Limit diff size
+        # Limit size
         DIFF=$(echo "$DIFF" | head -c 12000)
 
-        echo "🤖 Calling Groq API..."
+        echo "🤖 Preparing Groq request..."
+
+        # ✅ FIX: Safe JSON payload
+        PAYLOAD=$(jq -n --arg diff "$DIFF" '{
+          model: "openai/gpt-oss-20b",
+          input: ("You are a senior software documentation engineer.\n\nAnalyze the following git diff and generate structured markdown documentation.\n\nInclude:\n- Summary of changes\n- Components affected\n- Technical explanation\n\nGit Diff:\n" + $diff)
+        }')
+
+        echo "🚀 Calling Groq API..."
 
         RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
           -H "Authorization: Bearer $GROQ_API_KEY" \
           -H "Content-Type: application/json" \
-          -d "{
-            \"model\": \"openai/gpt-oss-20b\",
-            \"input\": \"You are a senior software documentation engineer.
-
-Analyze the following git diff and generate structured markdown documentation.
-
-Include:
-- Summary of changes
-- Components affected
-- Technical explanation
-
-Git Diff:
-$DIFF\"
-          }")
+          -d "$PAYLOAD")
 
         echo "🔍 Full API Response:"
         echo $RESPONSE
 
+        # ✅ FIX: Robust parsing
         DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
 
+        # ✅ Fallback handling
         if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
           echo "⚠️ Empty AI response. Using fallback."
           DOC="## AI Documentation\n\nNo meaningful documentation generated."
