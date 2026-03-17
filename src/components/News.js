@@ -13,16 +13,30 @@
         lastSearch:'',
         lastArticleTime:null,
         newArticlesCount:0,
-        showNewAlert:false
+        showNewAlert:false,
+        showBackToTop: false
       }
      }
 
     async componentDidMount(){
-     await this.fetchArticles();
-     this.pollInterval = setInterval(this.checkForNewArticles, 60000); // every 60s
+      await this.fetchArticles();
+      this.pollInterval = setInterval(this.checkForNewArticles, 60000); // every 60s
+      window.addEventListener('scroll', this.handleScrollForBackToTop);
     }
   componentWillUnmount() {
-   clearInterval(this.pollInterval);
+    clearInterval(this.pollInterval);
+    window.removeEventListener('scroll', this.handleScrollForBackToTop);
+  }
+  handleScrollForBackToTop = () => {
+    if (window.scrollY > 300) {
+      if (!this.state.showBackToTop) this.setState({ showBackToTop: true });
+    } else {
+      if (this.state.showBackToTop) this.setState({ showBackToTop: false });
+    }
+  }
+
+  handleBackToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
      async componentDidUpdate(prevProps) {
@@ -134,7 +148,16 @@
               );
             })}
           </div>
-          {/* Pagination removed for infinite scroll */}
+          {this.state.showBackToTop && (
+            <button
+              className="btn btn-primary position-fixed"
+              style={{ bottom: 30, right: 30, zIndex: 9999, borderRadius: '50%', width: 50, height: 50, fontSize: 22, boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
+              onClick={this.handleBackToTop}
+              title="Back to Top"
+            >
+              ↑
+            </button>
+          )}
         </div>
       );
     }
