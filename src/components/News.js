@@ -105,6 +105,9 @@
       return (
         <div className='container my-3'>
           <h2>NewsMoneky - Top Headlines</h2>
+          <div className="mb-2 text-secondary">
+            Total articles found: <strong>{this.state.totalResults}</strong>
+          </div>
           {loading && <Spinner />}
           {!loading && articles.length === 0 && (
             <div className="alert alert-info mt-4">No results found.</div>
@@ -131,10 +134,7 @@
               );
             })}
           </div>
-          <div className='container d-flex justify-content-between'>
-            <button disabled={this.state.page <= 1} type='button' className='btn btn-dark' onClick={this.handlePreviousClick}> &larr; Previous</button>
-            <button type='button' className='btn btn-dark' onClick={this.handleNextClick}>Next &rarr;</button>
-          </div>
+          {/* Pagination removed for infinite scroll */}
         </div>
       );
     }
