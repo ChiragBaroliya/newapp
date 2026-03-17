@@ -118,6 +118,10 @@
       const { searchQuery, favorites = [], onToggleFavorite } = this.props;
       return (
         <div className='container my-3'>
+          {/* Loading bar at the very top of the container */}
+          <div className="loading-bar-container">
+            {loading && <div className="loading-bar" />}
+          </div>
           <h2>NewsMoneky - Top Headlines</h2>
           <div className="mb-2 text-secondary">
             Total articles found: <strong>{this.state.totalResults}</strong>

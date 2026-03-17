@@ -1,3 +1,23 @@
+/* Loading bar styles */
+.loading-bar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 4px;
+  z-index: 2000;
+  pointer-events: none;
+}
+.loading-bar {
+  width: 100vw;
+  height: 4px;
+  background: linear-gradient(90deg, #007bff 0%, #00c6ff 100%);
+  animation: loading-bar-anim 1s linear infinite;
+}
+@keyframes loading-bar-anim {
+  0% { transform: translateX(-100vw); }
+  100% { transform: translateX(100vw); }
+}
 .App {
   text-align: center;
 }
