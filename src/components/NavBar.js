@@ -5,10 +5,18 @@ export default class NavBar extends Component {
   constructor(props) {
     super(props);
     this.state = { search: '' };
+    this.debounceTimeout = null;
   }
 
   handleInputChange = (e) => {
-    this.setState({ search: e.target.value });
+    const value = e.target.value;
+    this.setState({ search: value });
+    if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
+    this.debounceTimeout = setTimeout(() => {
+      if (this.props.onSearch) {
+        this.props.onSearch(value);
+      }
+    }, 500); // 500ms debounce
   }
 
   handleSearch = (e) => {

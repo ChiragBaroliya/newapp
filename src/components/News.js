@@ -1,5 +1,6 @@
   import React, { Component } from 'react'
-import NewsItem from './NewsItem'
+  import NewsItem from './NewsItem'
+  import Spinner from './Spinner';
   
   export default class News extends Component {
     constructor(props){
@@ -56,29 +57,44 @@ import NewsItem from './NewsItem'
       
      }
 
+    highlightText = (text, term) => {
+      if (!term || !text) return text;
+      const regex = new RegExp(`(${term})`, 'gi');
+      return text.split(regex).map((part, i) =>
+        regex.test(part) ? <mark key={i}>{part}</mark> : part
+      );
+    }
+
     render() {
+      const { loading, articles } = this.state;
+      const { searchQuery } = this.props;
       return (
         <div className='container my-3'>
           <h2>NewsMoneky - Top Headlines</h2>
+          {loading && <Spinner />}
+          {!loading && articles.length === 0 && (
+            <div className="alert alert-info mt-4">No results found.</div>
+          )}
           <div className='row'>
-          {this.state.articles.map((element)=> 
-          {
-            return   <div className='col-md-4' key={element.url}>
-            <NewsItem  title={element.title} 
-            description={  element.description} 
-            imageUrl={element.urlToImage}
-            newsUrl={element.url}
-            ></NewsItem>
-            </div>
-          })}
-          
+            {!loading && articles.map((element) => {
+              return (
+                <div className='col-md-4' key={element.url}>
+                  <NewsItem
+                    title={this.highlightText(element.title, searchQuery)}
+                    description={this.highlightText(element.description, searchQuery)}
+                    imageUrl={element.urlToImage}
+                    newsUrl={element.url}
+                  />
+                </div>
+              );
+            })}
           </div>
           <div className='container d-flex justify-content-between'>
             <button disabled={this.state.page <= 1} type='button' className='btn btn-dark' onClick={this.handlePreviousClick}> &larr; Previous</button>
             <button type='button' className='btn btn-dark' onClick={this.handleNextClick}>Next &rarr;</button>
           </div>
         </div>
-      )
+      );
     }
   }
     
