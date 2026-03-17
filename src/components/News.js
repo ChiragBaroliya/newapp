@@ -67,7 +67,7 @@
 
     render() {
       const { loading, articles } = this.state;
-      const { searchQuery } = this.props;
+      const { searchQuery, favorites = [], onToggleFavorite } = this.props;
       return (
         <div className='container my-3'>
           <h2>NewsMoneky - Top Headlines</h2>
@@ -77,6 +77,7 @@
           )}
           <div className='row'>
             {!loading && articles.map((element) => {
+              const isFavorite = favorites.some(fav => fav.url === element.url);
               return (
                 <div className='col-md-4' key={element.url}>
                   <NewsItem
@@ -84,6 +85,8 @@
                     description={this.highlightText(element.description, searchQuery)}
                     imageUrl={element.urlToImage}
                     newsUrl={element.url}
+                    isFavorite={isFavorite}
+                    onToggleFavorite={() => onToggleFavorite && onToggleFavorite(element)}
                   />
                 </div>
               );
