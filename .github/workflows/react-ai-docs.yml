@@ -9,10 +9,12 @@ jobs:
 
     steps:
     # ----------------------------------------
-    # Checkout Code
+    # Checkout Code (FULL HISTORY FIX)
     # ----------------------------------------
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # ✅ IMPORTANT FIX
 
     # ----------------------------------------
     # Setup Node.js
@@ -61,11 +63,19 @@ jobs:
           exit 0
         fi
 
-        DIFF=$(git diff HEAD~1 HEAD)
+        # Check commit count
+        COMMIT_COUNT=$(git rev-list --count HEAD)
+
+        if [ "$COMMIT_COUNT" -lt 2 ]; then
+          echo "Only one commit found. Using full repo content..."
+          DIFF=$(git ls-files | xargs cat | head -c 12000)
+        else
+          DIFF=$(git diff HEAD~1 HEAD)
+        fi
 
         if [ -z "$DIFF" ]; then
-          echo "No changes detected. Using fallback diff..."
-          DIFF=$(git diff HEAD~2 HEAD)
+          echo "No changes detected. Skipping..."
+          exit 0
         fi
 
         # Limit diff size
