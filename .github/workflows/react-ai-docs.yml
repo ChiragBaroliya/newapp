@@ -1,0 +1,94 @@
+name: React AI Documentation (Manual)
+
+on:
+  workflow_dispatch:   # ✅ Manual trigger
+
+jobs:
+  build-and-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ----------------------------------------
+    # Checkout Code
+    # ----------------------------------------
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # ----------------------------------------
+    # Setup Node.js
+    # ----------------------------------------
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    # ----------------------------------------
+    # Install Dependencies
+    # ----------------------------------------
+    - name: Install dependencies
+      run: npm install
+
+    # ----------------------------------------
+    # Build React App
+    # ----------------------------------------
+    - name: Build project
+      run: npm run build
+
+    # ----------------------------------------
+    # Install jq (safe)
+    # ----------------------------------------
+    - name: Install jq
+      run: sudo apt-get update && sudo apt-get install -y jq
+
+    # ----------------------------------------
+    # AI Documentation (Groq)
+    # ----------------------------------------
+    - name: Generate AI Documentation
+      env:
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      run: |
+        echo "🔍 Getting Git Diff..."
+
+        DIFF=$(git diff HEAD~1 HEAD)
+
+        if [ -z "$DIFF" ]; then
+          echo "No changes detected. Skipping AI documentation."
+          exit 0
+        fi
+
+        DIFF=$(echo "$DIFF" | head -c 12000)
+
+        echo "🤖 Calling Groq API..."
+
+        RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
+          -H "Authorization: Bearer $GROQ_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"model\": \"openai/gpt-oss-20b\",
+            \"input\": \"Update documentation based on this git diff:\\n$DIFF\"
+          }")
+
+        DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text')
+
+        mkdir -p docs
+        echo "$DOC" > docs/auto-generated.md
+
+        echo "📄 Documentation generated"
+
+    # ----------------------------------------
+    # Commit Changes
+    # ----------------------------------------
+    - name: Commit documentation
+      run: |
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+
+        git add docs/auto-generated.md
+
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+          exit 0
+        fi
+
+        git commit -m "Auto update documentation via AI"
+        git push
