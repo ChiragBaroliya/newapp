@@ -1,36 +1,50 @@
-We need to generate structured markdown documentation: Summary of changes, Components affected, Technical explanation. Provide markdown. So analyze diff.
+We need structured markdown documentation. We should provide summary of changes, components affected, technical explanation. The diff shows modifications to GitHub workflow react-ai-docs.yml. It adds new steps: extraction of added lines, formatting them in green color, appending them to the generated documentation file. Also changed comment to "Groq + Highlight". The script modifications: replaced comments, changed some logic, added safe payload comment, added formatted changes logic. Also changed writing of docs file: writing doc + latest changes. Let's craft documentation.
 
-Key changes:
+We can structure:
 
-- rename comment: Checkout Code (FULL HISTORY FIX) -> FULL HISTORY
-- persist-credentials comment unchanged.
-- comment Disable CI strict mode changed.
-- In diff loop: earlier used ${{ github.event.head_commit.message }} to check commit message for infinite loop. Now uses LAST_COMMIT_MSG=$(git log -1 --pretty=%B) and checks that variable.
+## Summary of Changes
+- Updated workflow to include change highlighting.
 
-- DIFF calculation: changed to git diff HEAD~1..HEAD (two dots). Previously diff HEAD~1 HEAD. Not much difference? Usually same; but two dots ensures symmetrical? but fine.
+## Components Affected
+- .github/workflows/react-ai-docs.yml
+- CI pipeline for AI documentation generation
 
-- Removed comment about preventing infinite loop; added check for proper loop.
+Also mention environment variables: JQ, etc.
 
-- Added comments for FIX.
+## Technical Explanation
 
-- For API call: previously constructed JSON via string interpolation inside -d. Now uses jq to produce safe JSON payload and stores in PAYLOAD variable. Then uses -d "$PAYLOAD".
+Explain: infinite loop check, commit count handling, diff extraction, added lines extraction, formatting with HTML span green, building JSON payload to Groq API, parsing response, fallback, writing docs, including formatted changes.
 
-- Added comment "Preparing Groq request".
+Also mention that diff is limited to first 12k characters, etc.
 
-- Also added "✅ FIX: Safe JSON payload" comment.
+Maybe mention new variable ADDED_LINES etc.
 
-- Also added "✅ FIX: Robust parsing" comment before jq parse of RESPONSE.
+Let's produce markdown.
 
-- Also added fallback handling comment.
+## 🟢 Latest Changes
 
-Thus components: GitHub Actions workflow .github/workflows/react-ai-docs.yml. Also Groq API call. Also usage of jq for safe JSON, and new logic to avoid infinite loop.
-
-Technical explanation: changes improve robustness: use of git log to get commit message to avoid expansion issues, use jq to avoid JSON injection, proper diff syntax, better fallback. Also removed some comments.
-
-Now produce markdown doc summarizing.
-
-Let's produce sections: Summary, Affected Components, Technical Changes. Provide bullet points.
-
-Also mention that workflow now uses actions/checkout v4 with full history, persist credentials, etc.
-
-Let's produce final answer.
+<span style="color:green">+     # Generate AI Documentation (Groq + Highlight)</span>
+<span style="color:green">+         # Prevent infinite loop</span>
+<span style="color:green">+         # Get diff</span>
+<span style="color:green">+         echo "🟢 Extracting added lines..."</span>
+<span style="color:green">+ </span>
+<span style="color:green">+         # Extract added lines</span>
+<span style="color:green">+ </span>
+<span style="color:green">+         # Format with green color</span>
+<span style="color:green">+         FORMATTED_CHANGES=$(echo "$ADDED_LINES" | sed 's/.*/<span style="color:green">+ &<\/span>/')</span>
+<span style="color:green">+ </span>
+<span style="color:green">+         if [ -z "$FORMATTED_CHANGES" ]; then</span>
+<span style="color:green">+           FORMATTED_CHANGES="No new changes detected."</span>
+<span style="color:green">+         fi</span>
+<span style="color:green">+ </span>
+<span style="color:green">+         # Safe payload</span>
+<span style="color:green">+         # Parse response</span>
+<span style="color:green">+         echo "📄 Writing documentation..."</span>
+<span style="color:green">+ </span>
+<span style="color:green">+         {</span>
+<span style="color:green">+           echo "$DOC"</span>
+<span style="color:green">+           echo ""</span>
+<span style="color:green">+           echo "## 🟢 Latest Changes"</span>
+<span style="color:green">+           echo ""</span>
+<span style="color:green">+           echo "$FORMATTED_CHANGES"</span>
+<span style="color:green">+         } > docs/auto-generated.md</span>
