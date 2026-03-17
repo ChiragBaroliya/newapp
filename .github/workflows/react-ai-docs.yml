@@ -50,13 +50,13 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y jq
 
     # ----------------------------------------
-    # Generate AI Documentation (Groq + Highlight)
+    # Generate AI Documentation (Commit History Based)
     # ----------------------------------------
     - name: Generate AI Documentation
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       run: |
-        echo "🔍 Getting Git Diff..."
+        echo "📜 Getting commit history..."
 
         # Prevent infinite loop
         LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
@@ -65,40 +65,23 @@ jobs:
           exit 0
         fi
 
-        # Get diff
-        COMMIT_COUNT=$(git rev-list --count HEAD)
-        if [ "$COMMIT_COUNT" -lt 2 ]; then
-          echo "Only one commit found. Using full repo content..."
-          DIFF=$(git ls-files | xargs cat | head -c 12000)
-        else
-          DIFF=$(git diff HEAD~1..HEAD)
-        fi
+        # Get last 20 commits
+        COMMITS=$(git log -20 --pretty=format:"Commit: %h%nAuthor: %an%nMessage: %s%nDate: %ad%n---")
 
-        if [ -z "$DIFF" ]; then
-          echo "No changes detected. Skipping..."
+        if [ -z "$COMMITS" ]; then
+          echo "No commit history found"
           exit 0
         fi
 
-        DIFF=$(echo "$DIFF" | head -c 12000)
-
-        echo "🟢 Extracting added lines..."
-
-        # Extract added lines
-        ADDED_LINES=$(echo "$DIFF" | grep '^+' | grep -v '+++' | sed 's/^+//')
-
-        # Format with green color
-        FORMATTED_CHANGES=$(echo "$ADDED_LINES" | sed 's/.*/<span style="color:green">+ &<\/span>/')
-
-        if [ -z "$FORMATTED_CHANGES" ]; then
-          FORMATTED_CHANGES="No new changes detected."
-        fi
+        # Limit size (token safety)
+        COMMITS=$(echo "$COMMITS" | head -c 12000)
 
         echo "🤖 Preparing Groq request..."
 
-        # Safe payload
-        PAYLOAD=$(jq -n --arg diff "$DIFF" '{
+        # Safe JSON payload
+        PAYLOAD=$(jq -n --arg commits "$COMMITS" '{
           model: "openai/gpt-oss-20b",
-          input: ("You are a senior software documentation engineer.\n\nAnalyze the following git diff and generate structured markdown documentation.\n\nInclude:\n- Summary of changes\n- Components affected\n- Technical explanation\n\nGit Diff:\n" + $diff)
+          input: ("You are a senior software documentation engineer.\n\nAnalyze the following commit history and generate structured project documentation.\n\nInclude:\n- Project overview\n- Features implemented\n- Components/modules affected\n- Key improvements\n- Technical summary\n\nCommit History:\n" + $commits)
         }')
 
         echo "🚀 Calling Groq API..."
@@ -114,6 +97,7 @@ jobs:
         # Parse response
         DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
 
+        # Fallback
         if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
           DOC="## AI Documentation\n\nNo meaningful documentation generated."
         fi
@@ -122,13 +106,7 @@ jobs:
 
         echo "📄 Writing documentation..."
 
-        {
-          echo "$DOC"
-          echo ""
-          echo "## 🟢 Latest Changes"
-          echo ""
-          echo "$FORMATTED_CHANGES"
-        } > docs/auto-generated.md
+        echo "$DOC" > docs/auto-generated.md
 
     # ----------------------------------------
     # Commit & Push Changes
