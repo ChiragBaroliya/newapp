@@ -19,7 +19,7 @@ export default class App extends Component {
       favorites: JSON.parse(localStorage.getItem('favorites') || '[]'),
       category: 'business',
       showRegister: false,
-      page: 'news' // 'news' or 'favorites'
+      page: 'news' // 'news', 'favorites', or 'profile'
     };
     handleNav = (page) => {
       this.setState({ page });
@@ -119,7 +119,7 @@ export default class App extends Component {
           onNav={this.handleNav}
           page={this.state.page}
         />
-        {this.state.page === 'news' ? (
+        {this.state.page === 'news' && (
           <News
             searchQuery={this.state.searchQuery}
             favorites={this.state.favorites}
@@ -127,11 +127,15 @@ export default class App extends Component {
             category={this.state.category}
             username={this.state.username}
           />
-        ) : (
+        )}
+        {this.state.page === 'favorites' && (
           <Favorites
             favorites={this.state.favorites}
             onToggleFavorite={this.handleToggleFavorite}
           />
+        )}
+        {this.state.page === 'profile' && (
+          <Profile username={this.state.username} />
         )}
       </div>
     );
