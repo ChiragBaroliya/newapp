@@ -5,6 +5,7 @@ import React, { Component } from 'react';
 import NavBar from './components/NavBar';
 import News from './components/News';
 import Login from './components/Login';
+import Register from './components/Register';
 
 export default class App extends Component {
   constructor(props) {
@@ -15,7 +16,8 @@ export default class App extends Component {
       username: '',
       darkMode: false,
       favorites: JSON.parse(localStorage.getItem('favorites') || '[]'),
-      category: 'business'
+      category: 'business',
+      showRegister: false
     };
   }
 
@@ -46,11 +48,30 @@ export default class App extends Component {
     this.setState({ searchQuery: query });
   }
 
-  handleLogin = (username) => {
-    this.setState({ isAuthenticated: true, username });
-    // Optionally, store auth in localStorage
+  handleLogin = (username, password) => {
+    // Check user credentials from localStorage
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    if (users[username] && users[username] === password) {
+      this.setState({ isAuthenticated: true, username });
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('username', username);
+      return true;
+    }
+    return false;
+  }
+
+  handleRegister = (username) => {
+    this.setState({ isAuthenticated: true, username, showRegister: false });
     localStorage.setItem('isAuthenticated', 'true');
     localStorage.setItem('username', username);
+  }
+
+  handleSwitchToRegister = () => {
+    this.setState({ showRegister: true });
+  }
+
+  handleSwitchToLogin = () => {
+    this.setState({ showRegister: false });
   }
 
   handleLogout = () => {
@@ -74,7 +95,11 @@ export default class App extends Component {
 
   render() {
     if (!this.state.isAuthenticated) {
-      return <Login onLogin={this.handleLogin} />;
+      if (this.state.showRegister) {
+        return <Register onRegister={this.handleRegister} onSwitchToLogin={this.handleSwitchToLogin} />;
+      } else {
+        return <Login onLogin={this.handleLogin} onSwitchToRegister={this.handleSwitchToRegister} />;
+      }
     }
     return (
       <div className={this.state.darkMode ? 'App dark-mode' : 'App'}>
