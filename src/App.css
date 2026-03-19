@@ -1,3 +1,23 @@
+/* Loading bar styles */
+.loading-bar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 4px;
+  z-index: 2000;
+  pointer-events: none;
+}
+.loading-bar {
+  width: 100vw;
+  height: 4px;
+  background: linear-gradient(90deg, #007bff 0%, #00c6ff 100%);
+  animation: loading-bar-anim 1s linear infinite;
+}
+@keyframes loading-bar-anim {
+  0% { transform: translateX(-100vw); }
+  100% { transform: translateX(100vw); }
+}
 .App {
   text-align: center;
 }
@@ -26,6 +46,37 @@
 
 .App-link {
   color: #61dafb;
+}
+
+.dark-mode {
+  background-color: #181a1b !important;
+  color: #e8e6e3 !important;
+}
+
+.dark-mode .navbar {
+  background-color: #23272b !important;
+}
+
+.dark-mode .navbar-brand,
+.dark-mode .nav-link,
+.dark-mode .navbar-nav .nav-link.active {
+  color: #e8e6e3 !important;
+}
+
+.dark-mode .form-control {
+  background-color: #23272b !important;
+  color: #e8e6e3 !important;
+  border-color: #444 !important;
+}
+
+.dark-mode .btn-dark {
+  background-color: #444 !important;
+  color: #e8e6e3 !important;
+}
+
+.dark-mode .btn-light {
+  background-color: #e8e6e3 !important;
+  color: #23272b !important;
 }
 
 @keyframes App-logo-spin {
