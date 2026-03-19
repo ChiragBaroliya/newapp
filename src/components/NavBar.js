@@ -61,6 +61,15 @@ export default class NavBar extends Component {
                   </button>
                 </li>
                 <li className="nav-item">
+                  <button
+                    className={"nav-link btn btn-link" + (page === 'profile' ? ' active' : '')}
+                    style={{ textDecoration: 'none', color: 'inherit', padding: 0 }}
+                    onClick={() => onNav && onNav('profile')}
+                  >
+                    Profile
+                  </button>
+                </li>
+                <li className="nav-item">
                   <a className="nav-link" href="/about">About</a>
                 </li>
                 <li className="nav-item">
