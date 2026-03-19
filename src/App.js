@@ -6,6 +6,7 @@ import NavBar from './components/NavBar';
 import News from './components/News';
 import Login from './components/Login';
 import Register from './components/Register';
+import Favorites from './components/Favorites';
 
 export default class App extends Component {
   constructor(props) {
@@ -17,8 +18,12 @@ export default class App extends Component {
       darkMode: false,
       favorites: JSON.parse(localStorage.getItem('favorites') || '[]'),
       category: 'business',
-      showRegister: false
+      showRegister: false,
+      page: 'news' // 'news' or 'favorites'
     };
+    handleNav = (page) => {
+      this.setState({ page });
+    }
   }
 
   handleCategoryChange = (category) => {
@@ -111,13 +116,22 @@ export default class App extends Component {
           onToggleDarkMode={this.handleToggleDarkMode}
           category={this.state.category}
           onCategoryChange={this.handleCategoryChange}
+          onNav={this.handleNav}
+          page={this.state.page}
         />
-        <News
-          searchQuery={this.state.searchQuery}
-          favorites={this.state.favorites}
-          onToggleFavorite={this.handleToggleFavorite}
-          category={this.state.category}
-        />
+        {this.state.page === 'news' ? (
+          <News
+            searchQuery={this.state.searchQuery}
+            favorites={this.state.favorites}
+            onToggleFavorite={this.handleToggleFavorite}
+            category={this.state.category}
+          />
+        ) : (
+          <Favorites
+            favorites={this.state.favorites}
+            onToggleFavorite={this.handleToggleFavorite}
+          />
+        )}
       </div>
     );
   }

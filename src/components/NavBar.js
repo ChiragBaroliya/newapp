@@ -27,7 +27,7 @@ export default class NavBar extends Component {
   }
 
   render() {
-    const { username, onLogout, darkMode, onToggleDarkMode } = this.props;
+    const { username, onLogout, darkMode, onToggleDarkMode, onNav, page } = this.props;
     const { category, onCategoryChange } = this.props;
     const categories = [
       'business', 'entertainment', 'general', 'health', 'science', 'sports', 'technology'
@@ -43,7 +43,22 @@ export default class NavBar extends Component {
             <div className="collapse navbar-collapse" id="navbarSupportedContent">
               <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                 <li className="nav-item">
-                  <a className="nav-link active" aria-current="page" href="/">Home</a>
+                  <button
+                    className={"nav-link btn btn-link" + (page === 'news' ? ' active' : '')}
+                    style={{ textDecoration: 'none', color: 'inherit', padding: 0 }}
+                    onClick={() => onNav && onNav('news')}
+                  >
+                    Home
+                  </button>
+                </li>
+                <li className="nav-item">
+                  <button
+                    className={"nav-link btn btn-link" + (page === 'favorites' ? ' active' : '')}
+                    style={{ textDecoration: 'none', color: 'inherit', padding: 0 }}
+                    onClick={() => onNav && onNav('favorites')}
+                  >
+                    Favorites
+                  </button>
                 </li>
                 <li className="nav-item">
                   <a className="nav-link" href="/about">About</a>
@@ -96,5 +111,7 @@ NavBar.propTypes = {
   darkMode: PropTypes.bool,
   onToggleDarkMode: PropTypes.func,
   category: PropTypes.string,
-  onCategoryChange: PropTypes.func
+  onCategoryChange: PropTypes.func,
+  onNav: PropTypes.func,
+  page: PropTypes.string
 };
