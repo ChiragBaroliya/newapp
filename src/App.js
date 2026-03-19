@@ -125,6 +125,7 @@ export default class App extends Component {
             favorites={this.state.favorites}
             onToggleFavorite={this.handleToggleFavorite}
             category={this.state.category}
+            username={this.state.username}
           />
         ) : (
           <Favorites

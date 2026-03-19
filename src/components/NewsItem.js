@@ -1,10 +1,11 @@
 
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import Comments from './Comments';
 
 export default class NewsItem extends Component {
   render() {
-    const { title, description, imageUrl, newsUrl, isFavorite, onToggleFavorite } = this.props;
+    const { title, description, imageUrl, newsUrl, isFavorite, onToggleFavorite, username } = this.props;
     return (
       <div className='my-3'>
         <div className="card" style={{ width: "18rem" }}>
@@ -20,6 +21,7 @@ export default class NewsItem extends Component {
             >
               {isFavorite ? "★ Bookmarked" : "☆ Bookmark"}
             </button>
+            <Comments articleUrl={newsUrl} username={username} />
           </div>
         </div>
       </div>
@@ -39,5 +41,6 @@ NewsItem.propTypes = {
   imageUrl: PropTypes.string,
   newsUrl: PropTypes.string,
   isFavorite: PropTypes.bool,
-  onToggleFavorite: PropTypes.func
+  onToggleFavorite: PropTypes.func,
+  username: PropTypes.string
 };

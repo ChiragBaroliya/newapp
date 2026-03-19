@@ -114,6 +114,7 @@
     render() {
       const { loading, articles } = this.state;
       const { searchQuery, favorites = [], onToggleFavorite } = this.props;
+        const { username } = this.props; // Added to extract username prop
       return (
         <div className='container my-3'>
           {/* Loading bar at the very top of the container */}
@@ -145,6 +146,7 @@
                     newsUrl={element.url}
                     isFavorite={isFavorite}
                     onToggleFavorite={() => onToggleFavorite && onToggleFavorite(element)}
+                     username={username} // Pass username to NewsItem
                   />
                 </div>
               );
