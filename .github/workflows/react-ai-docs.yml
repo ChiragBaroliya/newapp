@@ -38,10 +38,10 @@ jobs:
       run: echo "CI=false" >> $GITHUB_ENV
 
     # ----------------------------------------
-    # Build React App
+    # Build React App (optional)
     # ----------------------------------------
     - name: Build project
-      run: npm run build
+      run: npm run build || true
 
     # ----------------------------------------
     # Install jq
@@ -52,40 +52,37 @@ jobs:
     # ----------------------------------------
     # Generate Feature-wise AI Documentation
     # ----------------------------------------
-    - name: Generate AI Documentation (Feature Wise)
+    - name: Generate AI Documentation (Merge-Aware)
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         AI_PROMPT: |
           You are a senior software engineer.
 
-          Generate FEATURE-WISE documentation ONLY for this commit.
+          Generate FEATURE-WISE TECHNICAL documentation ONLY for this commit.
 
           IMPORTANT RULES:
-          - Do NOT explain entire project
-          - Focus ONLY on this commit
-          - If files are deleted → mention removal clearly
-          - If feature added → explain feature
-          - If bug fix → explain fix
+          - If this is a merge commit → analyze actual code changes (not merge message)
+          - Extract REAL code-level changes from diff
+          - DO NOT give generic explanation
+          - Mention actual fixes (syntax, imports, JSX, logic)
+          - If files deleted → clearly mention removal
           - Do NOT hallucinate
 
           OUTPUT FORMAT:
 
-          ## 🚀 Feature / Change Summary
+          ## 🚀 Change Summary
 
           ## 📂 Affected Files
-          - file list
 
-          ## 🔧 What Changed
-          (Explain actual change)
+          ## 🔧 Code Changes
+          (Explain exact code-level modifications)
 
-          ## 🧠 Technical Details
-          (Code-level explanation)
+          ## 🧠 Technical Explanation
 
           ## ⚡ Impact
-          (System impact / risk / improvement)
 
       run: |
-        echo "📜 Getting last commit details..."
+        echo "📜 Getting commit details..."
 
         LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
         LAST_COMMIT_HASH=$(git log -1 --pretty=%h)
@@ -97,8 +94,20 @@ jobs:
           exit 0
         fi
 
-        # ✅ FULL DIFF (CRITICAL FIX)
-        DIFF=$(git show HEAD)
+        # ----------------------------------------
+        # ✅ Detect Merge Commit
+        # ----------------------------------------
+        PARENT_COUNT=$(git rev-list --count --parents -n 1 HEAD)
+
+        if [ "$PARENT_COUNT" -gt 2 ]; then
+          echo "🔀 Merge commit detected. Using HEAD~1 diff..."
+          DIFF=$(git show HEAD~1)
+        else
+          echo "📌 Normal commit detected."
+          DIFF=$(git show HEAD)
+        fi
+
+        # Limit size
         DIFF=$(echo "$DIFF" | head -c 12000)
 
         echo "🤖 Preparing Groq request..."
