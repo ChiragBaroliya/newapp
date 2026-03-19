@@ -17,22 +17,24 @@ export default class App extends Component {
       favorites: JSON.parse(localStorage.getItem('favorites') || '[]'),
       category: 'business'
     };
-      handleCategoryChange = (category) => {
-        this.setState({ category });
+  }
+
+  handleCategoryChange = (category) => {
+    this.setState({ category });
+  }
+
+  handleToggleFavorite = (article) => {
+    this.setState((prevState) => {
+      const exists = prevState.favorites.some(fav => fav.url === article.url);
+      let newFavorites;
+      if (exists) {
+        newFavorites = prevState.favorites.filter(fav => fav.url !== article.url);
+      } else {
+        newFavorites = [...prevState.favorites, article];
       }
-    handleToggleFavorite = (article) => {
-      this.setState((prevState) => {
-        const exists = prevState.favorites.some(fav => fav.url === article.url);
-        let newFavorites;
-        if (exists) {
-          newFavorites = prevState.favorites.filter(fav => fav.url !== article.url);
-        } else {
-          newFavorites = [...prevState.favorites, article];
-        }
-        localStorage.setItem('favorites', JSON.stringify(newFavorites));
-        return { favorites: newFavorites };
-      });
-    }
+      localStorage.setItem('favorites', JSON.stringify(newFavorites));
+      return { favorites: newFavorites };
+    });
   }
   handleToggleDarkMode = () => {
     this.setState((prevState) => ({ darkMode: !prevState.darkMode }));
@@ -55,7 +57,7 @@ export default class App extends Component {
     this.setState({ isAuthenticated: false, username: '' });
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('username');
-  }
+  };
 
   componentDidMount() {
     // Restore auth state from localStorage

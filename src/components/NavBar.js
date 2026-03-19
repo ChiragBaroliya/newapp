@@ -52,7 +52,7 @@ export default class NavBar extends Component {
                   <select
                     className="form-select ms-2"
                     value={category}
-                    onChange={e => onCategoryChange && onCategoryChange(e.target.value)}
+                    onChange={e => onCategoryChange?.(e.target.value)}
                     style={{ width: 150 }}
                   >
                     {categories.map(cat => (
@@ -88,12 +88,13 @@ export default class NavBar extends Component {
       </div>
     );
   }
-  }
+}
 NavBar.propTypes = {
   onSearch: PropTypes.func,
   username: PropTypes.string,
   onLogout: PropTypes.func,
   darkMode: PropTypes.bool,
-  onToggleDarkMode: PropTypes.func
+  onToggleDarkMode: PropTypes.func,
+  category: PropTypes.string,
+  onCategoryChange: PropTypes.func
 };
-}

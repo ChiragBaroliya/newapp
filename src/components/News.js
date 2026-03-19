@@ -101,9 +101,7 @@
         return;
       }
       await this.setState({ page: this.state.page + 1 }, this.fetchArticles);
-     }
-      
-     }
+    }
 
     highlightText = (text, term) => {
       if (!term || !text) return text;
@@ -111,7 +109,7 @@
       return text.split(regex).map((part, i) =>
         regex.test(part) ? <mark key={i}>{part}</mark> : part
       );
-    }
+    };
 
     render() {
       const { loading, articles } = this.state;
