@@ -62,3 +62,47 @@ The instruction says "If files are deleted → mention removal clearly". No dele
 Ok. Let's produce.
 
 ---
+
+## 📅 Update - 2026-03-19 11:42:46
+
+**Commit:** c11867f
+**Author:** Chirag Baroliya
+**Message:** Refactor AI documentation workflow and prompts
+
+Updated AI documentation generation workflow to improve clarity and handle merge commits. Adjusted prompts and added logic to detect merge commits for accurate documentation.
+
+We need to generate feature-wise technical documentation only for this commit. The commit modifies the GitHub Actions workflow file react-ai-docs.yml. The modifications are:
+
+- Renaming job title from "Generate AI Documentation (Feature Wise)" to "Generate AI Documentation (Merge-Aware)".
+- Adjusting prompt: "Generate FEATURE-WISE TECHNICAL documentation ONLY for this commit." changed.
+- Updated important rules: removed some bullet points and added new ones: detect merge commits, extract real code-level changes, etc.
+- Updated the run script: changed echo "📜 Getting last commit details..." to "📜 Getting commit details..." and added merge commit detection logic: count parents, if >2 (actually >1?) the script incorrectly says >2? Wait: parent count >2 indicates more than 2 parents? Actually merge commit has two parents typically; but if >2 indicates merge of more than two branches? But commit message says handle merge commits. They used >2 but probably >1 would be typical; but commit uses >2. So script prints "🔀 Merge commit detected. Using HEAD~1 diff..." else "📌 Normal commit detected." and diff accordingly. The rest unchanged. They also changed DIFF size limit to 12000 but same.
+
+- Also changed earlier comment "Build React App" to "Build React App (optional)" and changed run command to "npm run build || true".
+
+So feature-wise technical doc for this commit should describe these changes.
+
+Need to produce sections:
+
+## 🚀 Change Summary
+- Summarize that the workflow has been updated to detect merge commits and adjust AI prompt and build step.
+
+## 📂 Affected Files
+- .github/workflows/react-ai-docs.yml
+
+## 🔧 Code Changes
+Explain modifications line by line.
+
+Important: mention actual changes, not generic.
+
+Also mention removed or added lines.
+
+## 🧠 Technical Explanation
+Explain why these changes: to handle merge commits, to avoid failure on build step, to adjust AI prompt etc.
+
+## ⚡ Impact
+Explain impact on CI, AI documentation generation, etc.
+
+Let's produce accordingly.
+
+---
