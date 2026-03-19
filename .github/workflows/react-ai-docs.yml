@@ -50,21 +50,40 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y jq
 
     # ----------------------------------------
-    # Generate Incremental AI Documentation
+    # Generate Feature-wise AI Documentation
     # ----------------------------------------
-    - name: Generate AI Documentation (Last Commit Only)
+    - name: Generate AI Documentation (Feature Wise)
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         AI_PROMPT: |
           You are a senior software engineer.
 
-          Generate a clear incremental documentation update based on this commit.
+          Generate FEATURE-WISE documentation ONLY for this commit.
 
-          Include:
-          - Summary of changes
-          - Affected components/files
-          - Technical explanation
-          - Impact on system
+          IMPORTANT RULES:
+          - Do NOT explain entire project
+          - Focus ONLY on this commit
+          - If files are deleted → mention removal clearly
+          - If feature added → explain feature
+          - If bug fix → explain fix
+          - Do NOT hallucinate
+
+          OUTPUT FORMAT:
+
+          ## 🚀 Feature / Change Summary
+
+          ## 📂 Affected Files
+          - file list
+
+          ## 🔧 What Changed
+          (Explain actual change)
+
+          ## 🧠 Technical Details
+          (Code-level explanation)
+
+          ## ⚡ Impact
+          (System impact / risk / improvement)
+
       run: |
         echo "📜 Getting last commit details..."
 
@@ -78,9 +97,9 @@ jobs:
           exit 0
         fi
 
-        # Get commit details
-        DIFF=$(git show --name-only HEAD)
-        DIFF=$(echo "$DIFF" | head -c 8000)
+        # ✅ FULL DIFF (CRITICAL FIX)
+        DIFF=$(git show HEAD)
+        DIFF=$(echo "$DIFF" | head -c 12000)
 
         echo "🤖 Preparing Groq request..."
 
@@ -90,7 +109,7 @@ jobs:
           --arg diff "$DIFF" \
           '{
             model: "openai/gpt-oss-20b",
-            input: ($prompt + "\n\nCommit Message:\n" + $msg + "\n\nCommit Details:\n" + $diff)
+            input: ($prompt + "\n\nCommit Message:\n" + $msg + "\n\nCommit Diff:\n" + $diff)
           }')
 
         echo "🚀 Calling Groq API..."
@@ -100,10 +119,13 @@ jobs:
           -H "Content-Type: application/json" \
           -d "$PAYLOAD")
 
+        echo "🔍 Raw Response:"
+        echo $RESPONSE
+
         DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
 
         if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
-          DOC="No meaningful documentation generated."
+          DOC="## ⚠️ AI Output Failed\nNo meaningful documentation generated."
         fi
 
         mkdir -p docs
