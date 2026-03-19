@@ -1,4 +1,4 @@
-name: React AI Documentation (Manual)
+name: React AI Documentation (Feature Wise)
 
 on:
   workflow_dispatch:
@@ -9,116 +9,94 @@ jobs:
 
     steps:
     # ----------------------------------------
-    # Checkout Code
+    # Checkout
     # ----------------------------------------
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        persist-credentials: true
 
     # ----------------------------------------
-    # Setup Node.js
+    # Setup Node
     # ----------------------------------------
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
 
-    # ----------------------------------------
-    # Install Dependencies
-    # ----------------------------------------
     - name: Install dependencies
       run: npm install
 
-    # ----------------------------------------
-    # Disable CI strict mode
-    # ----------------------------------------
-    - name: Disable CI warnings as errors
-      run: echo "CI=false" >> $GITHUB_ENV
-
-    # ----------------------------------------
-    # Build React App (optional)
-    # ----------------------------------------
     - name: Build project
       run: npm run build || true
 
-    # ----------------------------------------
-    # Install jq
-    # ----------------------------------------
     - name: Install jq
       run: sudo apt-get update && sudo apt-get install -y jq
 
     # ----------------------------------------
-    # Generate Feature-wise AI Documentation
+    # Generate Feature-wise Documentation
     # ----------------------------------------
-    - name: Generate AI Documentation (Merge-Aware)
+    - name: Generate AI Documentation (Feature Wise Only)
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         AI_PROMPT: |
           You are a senior software engineer.
 
-          Generate FEATURE-WISE TECHNICAL documentation ONLY for this commit.
+          Generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based on a merged branch.
 
           IMPORTANT RULES:
-          - If this is a merge commit → analyze actual code changes (not merge message)
-          - Extract REAL code-level changes from diff
-          - DO NOT give generic explanation
-          - Mention actual fixes (syntax, imports, JSX, logic)
-          - If files deleted → clearly mention removal
-          - Do NOT hallucinate
+          - DO NOT show commit-wise information
+          - Combine all commits into FEATURES and BUG FIXES
+          - Group related changes together
+          - DO NOT list commits
+          - DO NOT hallucinate
+          - If files deleted → mention removal
 
           OUTPUT FORMAT:
 
-          ## 🚀 Change Summary
+          ## 🚀 Features Implemented
 
-          ## 📂 Affected Files
+          ## 🐛 Bug Fixes
 
-          ## 🔧 Code Changes
-          (Explain exact code-level modifications)
+          ## 📂 Affected Modules / Components
 
-          ## 🧠 Technical Explanation
+          ## 🔧 Technical Changes (Detailed)
 
           ## ⚡ Impact
 
       run: |
-        echo "📜 Getting commit details..."
+        echo "🔍 Extracting PR data..."
 
-        LAST_COMMIT_MSG=$(git log -1 --pretty=%B)
-        LAST_COMMIT_HASH=$(git log -1 --pretty=%h)
-        LAST_COMMIT_AUTHOR=$(git log -1 --pretty=%an)
+        PARENTS=$(git log -1 --pretty=%P)
+        PARENT1=$(echo $PARENTS | cut -d ' ' -f1)
+        PARENT2=$(echo $PARENTS | cut -d ' ' -f2)
 
-        # Prevent infinite loop
-        if [[ "$LAST_COMMIT_MSG" == *"Auto update documentation"* ]]; then
-          echo "Skipping AI commit loop"
-          exit 0
-        fi
+        if [ -n "$PARENT2" ]; then
+          echo "🔀 Merge commit detected"
 
-        # ----------------------------------------
-        # ✅ Detect Merge Commit
-        # ----------------------------------------
-        PARENT_COUNT=$(git rev-list --count --parents -n 1 HEAD)
+          # ✅ FULL PR DIFF
+          DIFF=$(git diff $PARENT1 $PARENT2)
 
-        if [ "$PARENT_COUNT" -gt 2 ]; then
-          echo "🔀 Merge commit detected. Using HEAD~1 diff..."
-          DIFF=$(git show HEAD~1)
+          # ✅ COMMITS (ONLY FOR CONTEXT, NOT OUTPUT)
+          COMMITS=$(git log $PARENT1..$PARENT2 --pretty=format:"%s")
         else
-          echo "📌 Normal commit detected."
+          echo "📌 Normal commit"
+
           DIFF=$(git show HEAD)
+          COMMITS=$(git log -1 --pretty=format:"%s")
         fi
 
-        # Limit size
         DIFF=$(echo "$DIFF" | head -c 12000)
 
-        echo "🤖 Preparing Groq request..."
+        echo "🤖 Preparing AI request..."
 
         PAYLOAD=$(jq -n \
           --arg prompt "$AI_PROMPT" \
-          --arg msg "$LAST_COMMIT_MSG" \
+          --arg commits "$COMMITS" \
           --arg diff "$DIFF" \
           '{
             model: "openai/gpt-oss-20b",
-            input: ($prompt + "\n\nCommit Message:\n" + $msg + "\n\nCommit Diff:\n" + $diff)
+            input: ($prompt + "\n\nContext (Do NOT display):\n" + $commits + "\n\nCode Diff:\n" + $diff)
           }')
 
         echo "🚀 Calling Groq API..."
@@ -127,9 +105,6 @@ jobs:
           -H "Authorization: Bearer $GROQ_API_KEY" \
           -H "Content-Type: application/json" \
           -d "$PAYLOAD")
-
-        echo "🔍 Raw Response:"
-        echo $RESPONSE
 
         DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
 
@@ -146,11 +121,7 @@ jobs:
 
         {
           echo ""
-          echo "## 📅 Update - $CURRENT_TIME"
-          echo ""
-          echo "**Commit:** $LAST_COMMIT_HASH"
-          echo "**Author:** $LAST_COMMIT_AUTHOR"
-          echo "**Message:** $LAST_COMMIT_MSG"
+          echo "## 📅 Feature Release - $CURRENT_TIME"
           echo ""
           echo "$DOC"
           echo ""
@@ -158,7 +129,7 @@ jobs:
         } >> docs/auto-generated.md
 
     # ----------------------------------------
-    # Commit & Push Changes
+    # Commit & Push
     # ----------------------------------------
     - name: Commit documentation
       run: |
@@ -172,8 +143,6 @@ jobs:
           exit 0
         fi
 
-        git commit -m "Auto update documentation via AI"
-
-        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+        git commit -m "Auto generate feature-wise documentation"
 
         git push
