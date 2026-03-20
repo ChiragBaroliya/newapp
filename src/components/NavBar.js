@@ -70,7 +70,13 @@ export default class NavBar extends Component {
                   </button>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link" href="/about">About</a>
+                  <button
+                    className={"nav-link btn btn-link" + (page === 'about' ? ' active' : '')}
+                    style={{ textDecoration: 'none', color: 'inherit', padding: 0 }}
+                    onClick={() => onNav && onNav('about')}
+                  >
+                    About
+                  </button>
                 </li>
                 <li className="nav-item">
                   <select
