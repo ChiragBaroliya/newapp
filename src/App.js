@@ -8,6 +8,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Favorites from './components/Favorites';
 import About from './components/About';
+import Profile from './components/Profile';
 
 export default class App extends Component {
   constructor(props) {
