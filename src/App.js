@@ -7,6 +7,8 @@ import News from './components/News';
 import Login from './components/Login';
 import Register from './components/Register';
 import Favorites from './components/Favorites';
+import About from './components/About';
+import Profile from './components/Profile';
 
 export default class App extends Component {
   constructor(props) {
@@ -19,11 +21,12 @@ export default class App extends Component {
       favorites: JSON.parse(localStorage.getItem('favorites') || '[]'),
       category: 'business',
       showRegister: false,
-      page: 'news' // 'news', 'favorites', or 'profile'
+      page: 'news' // 'news', 'favorites', 'profile', or 'about'
     };
-    handleNav = (page) => {
-      this.setState({ page });
-    }
+  }
+
+  handleNav = (page) => {
+    this.setState({ page });
   }
 
   handleCategoryChange = (category) => {
@@ -136,6 +139,9 @@ export default class App extends Component {
         )}
         {this.state.page === 'profile' && (
           <Profile username={this.state.username} />
+        )}
+        {this.state.page === 'about' && (
+          <About />
         )}
       </div>
     );
