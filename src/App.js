@@ -25,6 +25,7 @@ export default class App extends Component {
     };
   }
 
+  // Arrow class property (like the other handlers) so `this` stays bound when passed to NavBar as onNav
   handleNav = (page) => {
     this.setState({ page });
   }
