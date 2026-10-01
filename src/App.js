@@ -23,9 +23,10 @@ export default class App extends Component {
       showRegister: false,
       page: 'news' // 'news', 'favorites', 'profile', or 'about'
     };
-    this.handleNav = (page) => {
-      this.setState({ page });
-    }
+  }
+
+  handleNav = (page) => {
+    this.setState({ page });
   }
 
   handleCategoryChange = (category) => {
